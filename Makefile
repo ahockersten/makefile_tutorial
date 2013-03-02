@@ -1,4 +1,7 @@
-program: main.o extra.o
+C_FILES = $(wildcard *.c)
+O_FILES = $(C_FILES:.c=.o)
+
+program: $(O_FILES)
 	gcc -o $@ $^
 
 %.o: %.c
