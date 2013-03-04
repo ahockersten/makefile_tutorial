@@ -126,3 +126,63 @@ So, ".c" files are now in the "src" directory, and object files end up in the "b
 You will also notice the usage of a `|` before the dependency on "build" above. This means it is an "order-only dependency". This way make will ensure that the directory exists, but will not look at its timestamp to determine if anything needs to be rebuilt. Since the modification date of a directory changes whenever a file inside it is modified, we need this to make sure files aren't rebuilt unnecessarily.
 
 I also changed the usage of `$^` to `$<`. `$<` expands to the first dependency in the list. We don't want to pass `build` to gcc when building.
+
+I consider this example complete. Modifying it to build other types of files should be easy if you've followed how it was constructed above. One thing that is pretty popular though, is having your build script produce prettier output. So let us expand our example to do that as well, and take the opportunity to learn some more concepts in make:
+
+	CC_VERBOSE = $(CC)
+	CC_NO_VERBOSE = @echo "Building $@..."; $(CC)
+
+	ifeq ($(VERBOSE),YES)
+	  V_CC = $(CC_VERBOSE)
+	  AT := 
+	else
+	  V_CC = $(CC_NO_VERBOSE)
+	  AT := @
+	endif
+
+	C_FILES = $(wildcard src/*.c)
+	O_FILES = $(C_FILES:src/%.c=build/%.o)
+
+	.PHONY: all clean
+	.DEFAULT: all
+
+	all: program
+
+	program: $(O_FILES)
+		$(V_CC) -o $@ $^
+
+	build:
+		$(AT)mkdir -p build
+
+	build/%.o: src/%.c | build
+		$(V_CC) -c $< -o $@
+
+	clean:
+		@echo Removing object files
+		$(AT)-rm -f $(O_FILES)
+		@echo Removing application
+		$(AT)-rm -f program
+		@echo Removing build directory
+		$(AT)-rm -rf build
+
+What this does, is that if `VERBOSE` is set to `YES` when you call make, then it will output all information on what commands are run. If not, that information will be suppressed. To be able to do this, I have to introduce some new variables. First, I replace all relevant usages of `@` with the new variable `$(AT)`. `$(AT)` is only set to the real `@` if we are in non-verbose mode. To do this I use the operator `:=`. The difference between `:=` and `=` in make is a bit complicated and a cause of many bugs. `:=` forces all variables on the right-hand side to be expanded immediately, while using `=` makes sure they are expanded at the last possible moment. Perhaps this is easiest to illustrate with a two small examples:
+
+	FOO := $(BAR)
+	BAR = bar
+
+	output: input
+		$(FOO) hello world
+
+Running `make output` here would be equal to running the command `hello world`, since `$(BAR)` is not defined when `$(FOO)` is set. `$(FOO)` will thus be an empty string.
+
+	FOO = $(BAR)
+	BAR = bar
+
+	output: input
+		$(FOO) hello world
+
+Running `make output` here would be equal to running the command `bar hello world`. `$(BAR)` is still not defined when `$(FOO)` is set. However, since it is available when `$(FOO)` is expanded in the `output` rule, it will expand to `$(BAR)`, which will in turn expand to "bar".
+
+Note that in the example makefile, it would be possible to use `=` instead of `:=`. I only use `:=` here to demonstrate the usage of `:=`.
+
+This wraps up this short but hopefully fairly complete tour of the most important features of make. There is still lots of stuff left to learn. In the next blog post, I will borrow a makefile from a real application and see how it can be improved.
