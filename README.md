@@ -70,3 +70,29 @@ We introduce two variables above. `C_FILES` is all of the C source input files, 
 `O_FILES` is produced by doing a pattern substitution on every white-space separated element in `C_FILES`, replacing any file with a ".c" file ending with one with a ".o" file ending. Why not just use `$(wildcard ...)` for `O_FILES` and skip creating the `C_FILES` variable? Because `$(wildcard ...)` will only produce listings of files that actually exist, and the first time we run our makefile no object files will exist. In other words, there will be no dependencies for `program`, which means that no object files will be build, and the `program` target will not be built correctly either.
 
 The construction of `O_FILES` uses the shorthand syntax for make's `$(patsubst pattern,replacement,$(var))` function. Thus, the declaration of `O_FILES` is equivalent to writing `O_FILES = $(patsubst %.c,%.o,$(C_FILES))`. Generally I find the shorthand syntax to be clearer, but there may be times explicitly using the `$(patsubst ...)` function is preferable.
+
+Let us take this example and make it more complete:
+
+	C_FILES = $(wildcard *.c)
+	O_FILES = $(C_FILES:.c=.o)
+
+	.PHONY: all clean
+	.DEFAULT: all
+
+	all: program
+
+	program: $(O_FILES)
+		gcc -o $@ $^
+
+	%.o: %.c
+		gcc -c $^
+
+	clean:
+		-rm -f $(O_FILES)
+		-rm -f program
+
+First, I added two phony targets, `all` and `clean`. These are used as shorthands for users, so you can run `make all`, and `make clean` instead of having to tell make which files should be produced. I then added two special targets, `.PHONY` and `.DEFAULT`. `.PHONY` tells make that "this target is not an actual file". Without this line, if you created a file named "all" or "clean", make would start behaving in unexpected ways. `.DEFAULT` tells make that if the user does not specify any other target, we should build the target(s) listed for `.DEFAULT`. In other words, running `make` now means the same thing as running `make all` (this line is not strictly necessary in this file. By default, make will build the first real target it sees listed, which in this case is `all`).
+
+Finally, I added a `clean` target above. The idea of the `clean` target is to remove any files produced by all the other make targets. If you're reading carefully, you'll notice that I put a `-` in front of the `rm` command. This tells make to ignore any errors from running this command, and continue with the build process. Obviously, having no object files is not an error (it just means they haven't been previously built), so that should not stop us from deleting `program` if it exists.
+
+Thus, we have arrived at the "bare minimum" makefile. There are however still some improvements I would like to do before I consider it be a good example.
