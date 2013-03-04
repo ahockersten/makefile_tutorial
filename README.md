@@ -25,3 +25,13 @@ Let's start by writing a makefile that is as simple as possible. This makefile j
 Makefiles consist of declarations of rules for building target files. This makefile contains just one target, the `a.out` binary. On the left side of the `:` we list the target output(s) (these are by default treated as files by make, though they can be other things). On the right side we list the dependencies for that output. After this follows a list of commands that should be run to produce the output. This line is indented with a TAB character. This is **required** syntax by make. If we were to use spaces instead, we would get an error message complaining about a "missing separator".
 
 Here we can also see the first and important magic piece of the make puzzle. When you run `make`, make will compare the modification date on the output file(s) to the modification date of the input file(s), and if and only if the input file(s) are newer than the output file(s), it will run the commands associated with the target.
+
+Now, let us make the example a bit more complicated:
+
+	program: main.o
+		gcc -o program main.o
+
+	main.o: main.c
+		gcc -c main.c
+
+Here we split compilation of object files and the linking of the binary (which has been renamed to `program`). Since `main.o` is a dependency of `program`, make knows it should run the rule for the `main.o` target first to create that file, before it can try to build `program`.
