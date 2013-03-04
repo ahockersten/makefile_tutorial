@@ -35,3 +35,13 @@ Now, let us make the example a bit more complicated:
 		gcc -c main.c
 
 Here we split compilation of object files and the linking of the binary (which has been renamed to `program`). Since `main.o` is a dependency of `program`, make knows it should run the rule for the `main.o` target first to create that file, before it can try to build `program`.
+
+Let us use some of make's features to make this a little more generic:
+
+	program: main.o
+		gcc -o $@ $^
+
+	%.o: %.c
+		gcc -c $^
+
+There are three new concepts in the code above. The first one is to use a generic rule. `%.o: %.c` means: "to produce any '.o' file, you need a '.c' file with the same name, and the procedure to do this is outlined in the build instructions below". `$^` is a special variable that means "input(s) of this target" (which would be "main.o" in the topmost case). `$@` means "output(s) of this target" (which would be "program" in the topmost case).
