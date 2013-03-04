@@ -96,3 +96,33 @@ First, I added two phony targets, `all` and `clean`. These are used as shorthand
 Finally, I added a `clean` target above. The idea of the `clean` target is to remove any files produced by all the other make targets. If you're reading carefully, you'll notice that I put a `-` in front of the `rm` command. This tells make to ignore any errors from running this command, and continue with the build process. Obviously, having no object files is not an error (it just means they haven't been previously built), so that should not stop us from deleting `program` if it exists.
 
 Thus, we have arrived at the "bare minimum" makefile. There are however still some improvements I would like to do before I consider it be a good example.
+
+First, I want source files in their own directory, and I do not want to pollute the directory our makefile is in with object files either:
+
+	C_FILES = $(wildcard src/*.c)
+	O_FILES = $(C_FILES:src/%.c=build/%.o)
+
+	.PHONY: all clean
+	.DEFAULT: all
+
+	all: program
+
+	program: $(O_FILES)
+		gcc -o $@ $^
+
+	build:
+		@mkdir -p build
+
+	build/%.o: src/%.c | build
+		gcc -c $< -o $@
+
+	clean:
+		-rm -f $(O_FILES)
+		-rm -f program
+		-rm -rf build
+
+So, ".c" files are now in the "src" directory, and object files end up in the "build" directory. If the build directory does not exist, it gets created. I added an `@` to the front of the mkdir command to silence it, as well; make will output any command not prefixed with an `@` as it runs it.
+
+You will also notice the usage of a `|` before the dependency on "build" above. This means it is an "order-only dependency". This way make will ensure that the directory exists, but will not look at its timestamp to determine if anything needs to be rebuilt. Since the modification date of a directory changes whenever a file inside it is modified, we need this to make sure files aren't rebuilt unnecessarily.
+
+I also changed the usage of `$^` to `$<`. `$<` expands to the first dependency in the list. We don't want to pass `build` to gcc when building.
