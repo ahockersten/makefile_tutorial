@@ -45,3 +45,11 @@ Let us use some of make's features to make this a little more generic:
 		gcc -c $^
 
 There are three new concepts in the code above. The first one is to use a generic rule. `%.o: %.c` means: "to produce any '.o' file, you need a '.c' file with the same name, and the procedure to do this is outlined in the build instructions below". `$^` is a special variable that means "input(s) of this target" (which would be "main.o" in the topmost case). `$@` means "output(s) of this target" (which would be "program" in the topmost case).
+
+Now if we add more files we can simply add them as dependencies for `program`:
+
+	program: main.o extra.o
+		gcc -o $@ $^
+
+	%.o: %.c
+		gcc -c $^
