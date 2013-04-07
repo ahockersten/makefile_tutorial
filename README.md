@@ -15,7 +15,7 @@ So why would you not want to use make?
 
 So maybe you looked at the alternatives and after some consideration decided to bite the bullet and use make for your project, but you have no idea how and where to start. That is another of make's little quirks, it is quite uncommon for anyone to create a makefile from scratch. In this blog post I will however walk you all the way from a very simple example to a complex one, evolving a makefile that with a small amount of customization should be useful in any project.
 
-There is a git repository belonging to this project where you can download the results and test them out, as well as explore in detail how the makefile evolves. You may find it here: FIXME INSERT LINK
+There is a git repository belonging to this project where you can download the results and test them out, as well as explore in detail how the makefile evolves. You may find it [here](https://github.com/maskinskrift/makefile_tutorial).
 
 Let's start by writing a makefile that is as simple as possible. This makefile just produces a binary from a single input C file:
 
